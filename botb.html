@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8-LIM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            overflow-x: hidden;
+            overflow-y: auto;
+            font-family: Arial, sans-serif;
+            width: 100%;
+        }
+
+        /* Canvas is now FIXED so it stays as background while page scrolls */
+        canvas {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* All content sits above the canvas */
+        .page-wrapper {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+            padding-top: 40px;
+            pointer-events: none;
+            width: 100%;
+        }
+
+        .title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #fff;
+            letter-spacing: 2px;
+            margin: 0;
+        }
+
+        .subtitle {
+            font-size: 22px;
+            color: #fff;
+            text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff;
+            margin-top: 5px;
+            letter-spacing: 1px;
+            font-weight: 300;
+        }
+
+        .center-section {
+            text-align: center;
+            margin-top: 20px;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            margin: 0 auto 40px;
+            cursor: pointer;
+            transition: box-shadow 0.3s ease;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .circle:hover {
+            box-shadow: 0 0 20px #fff, 0 0 40px #fff, inset 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .circle:active {
+            transform: scale(0.95);
+        }
+
+        .hall-of-fame {
+            font-size: 20px;
+            color: #fff;
+            text-shadow: 0 0 10px #fff, 0 0 15px #fff;
+            letter-spacing: 2px;
+            font-weight: 300;
+            margin: 0;
+            margin-bottom: 60px;
+        }
+
+        .members-section {
+            width: 90%;
+            max-width: 1000px;
+            pointer-events: auto;
+            margin-bottom: 80px;
+        }
+
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            justify-items: center;
+        }
+
+        .member {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .member-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: box-shadow 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .member-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .member-circle:hover {
+            box-shadow: 0 0 20px #fff, 0 0 30px #fff;
+        }
+
+        .member-name {
+            font-size: 12px;
+            color: #fff;
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+            letter-spacing: 1px;
+            font-weight: 300;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .gallery-section {
+            width: 90%;
+            max-width: 1000px;
+            pointer-events: auto;
+            text-align: center;
+            padding-bottom: 80px;
+        }
+
+        .gallery-title {
+            font-size: 24px;
+            color: #fff;
+            text-shadow: 0 0 10px #fff, 0 0 15px #fff;
+            letter-spacing: 2px;
+            font-weight: 300;
+            margin: 0 0 20px 0;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            justify-items: center;
+        }
+
+        .gallery-item {
+            width: 100%;
+            height: 150px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: box-shadow 0.3s ease;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-item:hover {
+            box-shadow: 0 0 20px #fff, 0 0 30px #fff;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <audio autoplay loop>
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="page-wrapper">
+
+        <div class="container">
+            <h1 class="title">8-LIM</h1>
+            <p class="subtitle">BOYS AT THE BACK</p>
+        </div>
+
+        <div class="center-section">
+            <div class="circle" id="hof-circle">
+                <img src="skull.png" alt="Hall of Fame">
+            </div>
+            <p class="hall-of-fame">— HALL OF FAME —</p>
+        </div>
+
+        <div class="members-section">
+            <div class="members-grid" id="members-grid">
+                <div class="member" data-fixed="true">
+                    <div class="member-circle"><img src="zeus.png" alt="ZEUS"></div>
+                    <div class="member-name">ZEUS</div>
+                </div>
+                <div class="member" data-fixed="true">
+                    <div class="member-circle"><img src="cris.png" alt="CRIS"></div>
+                    <div class="member-name">CRIS</div>
+                </div>
+                <div class="member" data-fixed="true">
+                    <div class="member-circle"><img src="jayden.png" alt="JAYDEN"></div>
+                    <div class="member-name">JAYDEN</div>
+                </div>
+                <div class="member" data-shuffle="true">
+                    <div class="member-circle"><img src="liozhk.png" alt="LIOZHK"></div>
+                    <div class="member-name">LIOZHK</div>
+                </div>
+                <div class="member" data-shuffle="true">
+                    <div class="member-circle"><img src="labian.png" alt="LABIAN"></div>
+                    <div class="member-name">LABIAN</div>
+                </div>
+                <div class="member" data-shuffle="true">
+                    <div class="member-circle"><img src="rayleigh.png" alt="RAYLEIGH"></div>
+                    <div class="member-name">RAYLEIGH</div>
+                </div>
+                <div class="member" data-shuffle="true">
+                    <div class="member-circle"><img src="brooklyn.png" alt="BROOKLYN"></div>
+                    <div class="member-name">BROOKLYN</div>
+                </div>
+                <div class="member" data-shuffle="true">
+                    <div class="member-circle"><img src="giero.png" alt="GIERO"></div>
+                    <div class="member-name">GIERO</div>
+                </div>
+                <div class="member" data-shuffle="true">
+                    <div class="member-circle"><img src="nashty.png" alt="NASHTY"></div>
+                    <div class="member-name">NASHTY</div>
+                </div>
+                <div class="member" data-shuffle="true">
+                    <div class="member-circle"><img src="jhioz.png" alt="JHIOZ"></div>
+                    <div class="member-name">JHIOZ</div>
+                </div>
+                <div class="member" data-shuffle="true">
+                    <div class="member-circle"><img src="nyze.png" alt="NYZEL"></div>
+                    <div class="member-name">NYZEL</div>
+                </div>
+                <div class="member" data-shuffle="true">
+                    <div class="member-circle"><img src="matthew.png" alt="MATTHEW"></div>
+                    <div class="member-name">MATTHEW</div>
+                </div>
+                <div class="member" data-shuffle="true">
+                    <div class="member-circle"><img src="jerome.png" alt="JEROME"></div>
+                    <div class="member-name">JEROME</div>
+                </div>
+                <div class="member" data-shuffle="true">
+                    <div class="member-circle"><img src="jaypee.png" alt="JAYPEE"></div>
+                    <div class="member-name">JAYPEE</div>
+                </div>
+                <div class="member" data-shuffle="true">
+                    <div class="member-circle"><img src="red.png" alt="RED"></div>
+                    <div class="member-name">RED</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="gallery-section">
+            <h2 class="gallery-title">GALLERY</h2>
+            <div class="gallery-grid">
+                <div class="gallery-item"><img src="gallery1.png" alt="Gallery 1"></div>
+                <div class="gallery-item"><img src="gallery2.png" alt="Gallery 2"></div>
+                <div class="gallery-item"><img src="gallery3.png" alt="Gallery 3"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+
+        let particlesActive = false;
+
+        class Particle {
+            constructor() {
+                this.reset(true);
+            }
+
+            reset(initial = false) {
+                this.x = Math.random() * canvas.width;
+                this.y = initial ? Math.random() * -canvas.height : -10; // start at top
+                this.size = Math.random() * 1 + 0.3;
+                this.speed = Math.random() * 1 + 0.5;
+                this.opacity = Math.random() * 0.5 + 0.3;
+            }
+
+            update() {
+                if (!particlesActive) return; // frozen until triggered
+                this.y += this.speed;
+                if (this.y > canvas.height) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 150; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+
+        // Trigger falling on any interaction: click, keypress, or touch
+        function startParticles() {
+            particlesActive = true;
+        }
+        document.addEventListener('click', startParticles, { once: true });
+        document.addEventListener('keydown', startParticles, { once: true });
+        document.addEventListener('touchstart', startParticles, { once: true });
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        animate();
+
+        document.getElementById('hof-circle').addEventListener('click', () => {
+            console.log('Circle clicked!');
+        });
+
+        // Shuffle the non-fixed members in the DOM
+        const grid = document.getElementById('members-grid');
+        const shuffleItems = [...grid.querySelectorAll('[data-shuffle="true"]')];
+        for (let i = shuffleItems.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            grid.appendChild(shuffleItems[i]);
+            [shuffleItems[i], shuffleItems[j]] = [shuffleItems[j], shuffleItems[i]];
+        }
+
+        // Auto image format support — tries multiple formats so you don't need to rename files
+        const formats = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+        document.querySelectorAll('img').forEach(img => {
+            const originalSrc = img.getAttribute('src');
+            // Strip extension to get base name
+            const base = originalSrc.replace(/\.[^.]+$/, '');
+
+            let tried = 0;
+            function tryNext() {
+                if (tried >= formats.length) return; // all formats exhausted
+                const attempt = `${base}.${formats[tried]}`;
+                tried++;
+                const test = new Image();
+                test.onload = () => { img.src = attempt; }; // found it!
+                test.onerror = tryNext; // try next format
+                test.src = attempt;
+            }
+
+            // Start by checking if current src loads, if not try all formats
+            const initial = new Image();
+            initial.onload = () => {}; // current src works, do nothing
+            initial.onerror = () => { tried = 0; tryNext(); };
+            initial.src = originalSrc;
+        });
+    </script>
+</body>
+</html>
